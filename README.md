@@ -2,6 +2,21 @@
 
 Aplikasi Flutter untuk sistem absensi dosen dan pengelolaan presensi mahasiswa. Aplikasi ini menggunakan backend REST API pada repository [absensi-dosen-backend](https://github.com/Salman-artz/absensi-dosen-backend).
 
+---
+
+## 📸 Screenshots Aplikasi Mobile
+
+<p align="center">
+  <img src="screenshots/foto1_mobile_qr_scanner_flutter.png" alt="Mobile QR Scanner Flutter" width="280" />
+  &nbsp;&nbsp;&nbsp;&nbsp;
+  <img src="screenshots/foto2_jadwal_kuliah_presensi_mobile.png" alt="Jadwal Kuliah dan Presensi Mahasiswa" width="280" />
+</p>
+<p align="center">
+  <em>Kiri: Pemindai QR Code Dinamis & Absensi Real-Time &nbsp;|&nbsp; Kanan: Jadwal Perkuliahan & Rekap Kehadiran</em>
+</p>
+
+---
+
 ## Fitur
 
 ### Dosen

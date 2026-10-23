@@ -1,9 +1,12 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-const String kApiBaseUrl = String.fromEnvironment('API_BASE_URL', defaultValue: 'http://192.168.100.133:4000/api');
+const String kApiBaseUrl = String.fromEnvironment(
+  'API_BASE_URL',
+  defaultValue: kIsWeb ? 'http://localhost:4000/api' : 'http://192.168.100.133:4000/api',
+);
 
 final storageProvider = Provider((ref) => const FlutterSecureStorage());
 
@@ -27,22 +30,20 @@ final dioProvider = Provider<Dio>((ref) {
     },
     onError: (error, handler) async {
       if (error.response?.statusCode == 401) {
-        // Implement auto refresh token
         final refreshToken = await storage.read(key: 'refresh_token');
         if (refreshToken != null) {
           try {
             final refreshDio = Dio(BaseOptions(baseUrl: kApiBaseUrl));
             final res = await refreshDio.post('/auth/refresh', data: {
-              'refreshToken': refreshToken
+              'refreshToken': refreshToken,
             });
-            
+
             final newAccessToken = res.data['data']['accessToken'];
             final newRefreshToken = res.data['data']['refreshToken'];
-            
+
             await storage.write(key: 'access_token', value: newAccessToken);
             await storage.write(key: 'refresh_token', value: newRefreshToken);
-            
-            // Retry request
+
             error.requestOptions.headers['Authorization'] = 'Bearer $newAccessToken';
             final cloneReq = await refreshDio.request(
               error.requestOptions.path,
@@ -56,13 +57,12 @@ final dioProvider = Provider<Dio>((ref) {
             return handler.resolve(cloneReq);
           } catch (e) {
             await storage.deleteAll();
-            // Optional: trigger logout state here
             return handler.next(error);
           }
         }
       }
       return handler.next(error);
-    }
+    },
   ));
 
   return dio;

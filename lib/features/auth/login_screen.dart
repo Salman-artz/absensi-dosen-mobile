@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../core/theme/app_colors.dart';
+import '../../core/theme/theme_provider.dart';
 import 'auth_provider.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
@@ -15,15 +17,23 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   bool _obscureText = true;
 
   @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authProvider);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     ref.listen<AuthState>(authProvider, (previous, next) {
       if (next.status == AuthStatus.unauthenticated && next.error != null) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(next.error!),
-            backgroundColor: Colors.redAccent,
+            backgroundColor: AppColors.statusAlpa,
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -31,158 +41,166 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     });
 
     return Scaffold(
-      backgroundColor: Colors.grey[50], // Light background
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      appBar: AppBar(
+        actions: [
+          IconButton(
+            tooltip: isDark ? 'Mode Terang' : 'Mode Gelap',
+            icon: Icon(
+              isDark ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
+              color: isDark ? AppColors.accent : AppColors.primary,
+            ),
+            onPressed: () => ref.read(themeModeProvider.notifier).toggleTheme(),
+          ),
+          const SizedBox(width: 8),
+        ],
+      ),
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 24.0),
+            padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // Logo or Icon
-                const Icon(
-                  Icons.qr_code_scanner_rounded,
-                  size: 80,
-                  color: Colors.blueAccent,
+                // SaaS App Badge Icon
+                Center(
+                  child: Container(
+                    width: 88,
+                    height: 88,
+                    decoration: BoxDecoration(
+                      gradient: isDark ? AppColors.darkPrimaryGradient : AppColors.primaryGradient,
+                      borderRadius: BorderRadius.circular(24),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.primary.withOpacity(0.35),
+                          blurRadius: 24,
+                          offset: const Offset(0, 10),
+                        ),
+                      ],
+                    ),
+                    child: const Icon(
+                      Icons.qr_code_scanner_rounded,
+                      size: 46,
+                      color: Colors.white,
+                    ),
+                  ),
                 ),
-                const SizedBox(height: 24),
-                
-                // Title
-                const Text(
-                  'Absensi Dosen',
+                const SizedBox(height: 28),
+
+                // Title & Subtitle
+                Text(
+                  'Absensi Akademik',
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
-                    letterSpacing: 1.2,
+                    fontSize: 26,
+                    fontWeight: FontWeight.w800,
+                    color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+                    letterSpacing: -0.5,
                   ),
                 ),
                 const SizedBox(height: 8),
-                const Text(
-                  'Masuk untuk mengelola presensi kelas',
+                Text(
+                  'Sistem Presensi QR Code Dosen & Mahasiswa',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 14,
-                    color: Colors.black54,
+                    color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
                   ),
                 ),
-                const SizedBox(height: 48),
+                const SizedBox(height: 36),
 
-                // Card for form
+                // Login Form Card
                 Container(
                   padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: isDark ? AppColors.darkSurface : AppColors.surface,
                     borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: isDark ? AppColors.darkBorder : AppColors.border,
+                      width: 1,
+                    ),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
-                        blurRadius: 20,
-                        offset: const Offset(0, 10),
+                        color: Colors.black.withOpacity(isDark ? 0.3 : 0.04),
+                        blurRadius: 24,
+                        offset: const Offset(0, 8),
                       ),
                     ],
                   ),
                   child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       // Email Field
                       TextField(
                         controller: _emailController,
                         keyboardType: TextInputType.emailAddress,
-                        decoration: InputDecoration(
-                          labelText: 'Email',
-                          prefixIcon: const Icon(Icons.email_outlined),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(color: Colors.grey.shade300),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(color: Colors.grey.shade300),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(color: Colors.blueAccent, width: 2),
-                          ),
-                          filled: true,
-                          fillColor: Colors.grey.shade50,
+                        style: TextStyle(
+                          color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+                        ),
+                        decoration: const InputDecoration(
+                          labelText: 'Email Kampus',
+                          prefixIcon: Icon(Icons.email_outlined),
                         ),
                       ),
-                      const SizedBox(height: 20),
-                      
+                      const SizedBox(height: 18),
+
                       // Password Field
                       TextField(
                         controller: _passwordController,
                         obscureText: _obscureText,
+                        style: TextStyle(
+                          color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+                        ),
                         decoration: InputDecoration(
                           labelText: 'Password',
                           prefixIcon: const Icon(Icons.lock_outline),
                           suffixIcon: IconButton(
                             icon: Icon(
-                              _obscureText ? Icons.visibility_off : Icons.visibility,
-                              color: Colors.grey,
+                              _obscureText ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                              color: isDark ? AppColors.darkTextMuted : AppColors.textMuted,
                             ),
-                            onPressed: () {
-                              setState(() {
-                                _obscureText = !_obscureText;
-                              });
-                            },
+                            onPressed: () => setState(() => _obscureText = !_obscureText),
                           ),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(color: Colors.grey.shade300),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(color: Colors.grey.shade300),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(color: Colors.blueAccent, width: 2),
-                          ),
-                          filled: true,
-                          fillColor: Colors.grey.shade50,
                         ),
                       ),
-                      const SizedBox(height: 32),
+                      const SizedBox(height: 28),
 
                       // Login Button
                       SizedBox(
-                        width: double.infinity,
-                        height: 50,
+                        height: 52,
                         child: ElevatedButton(
                           onPressed: authState.status == AuthStatus.loading
                               ? null
                               : () {
-                                  FocusScope.of(context).unfocus(); // Dismiss keyboard
+                                  FocusScope.of(context).unfocus();
                                   ref.read(authProvider.notifier).login(
-                                        _emailController.text,
+                                        _emailController.text.trim(),
                                         _passwordController.text,
                                       );
                                 },
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.blueAccent,
-                            foregroundColor: Colors.white,
+                            backgroundColor: isDark ? AppColors.primaryLight : AppColors.primary,
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
+                              borderRadius: BorderRadius.circular(14),
                             ),
-                            elevation: 2,
                           ),
                           child: authState.status == AuthStatus.loading
                               ? const SizedBox(
-                                  height: 24,
-                                  width: 24,
+                                  height: 22,
+                                  width: 22,
                                   child: CircularProgressIndicator(
                                     color: Colors.white,
                                     strokeWidth: 2.5,
                                   ),
                                 )
                               : const Text(
-                                  'Masuk',
+                                  'Masuk ke Akun',
                                   style: TextStyle(
                                     fontSize: 16,
-                                    fontWeight: FontWeight.bold,
+                                    fontWeight: FontWeight.w700,
+                                    color: Colors.white,
+                                    letterSpacing: -0.2,
                                   ),
                                 ),
                         ),
@@ -190,17 +208,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ],
                   ),
                 ),
-                
-                const SizedBox(height: 24),
-                // Footer
-                const Text(
-                  '© 2026 Universitas',
+
+                const SizedBox(height: 28),
+                Text(
+                  '© 2026 Universitas • Powered by Nordic Indigo',
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    color: Colors.grey,
+                    color: isDark ? AppColors.darkTextMuted : AppColors.textMuted,
                     fontSize: 12,
                   ),
-                )
+                ),
               ],
             ),
           ),

@@ -65,6 +65,10 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => StudentClassDetailScreen(scheduleId: state.pathParameters['id']!),
       ),
       GoRoute(
+        path: '/student-class-detail/:id',
+        builder: (context, state) => StudentClassDetailScreen(scheduleId: state.pathParameters['id']!),
+      ),
+      GoRoute(
         path: '/class-group-students/:className/:semester',
         builder: (context, state) => ClassGroupStudentsScreen(
           className: state.pathParameters['className']!,

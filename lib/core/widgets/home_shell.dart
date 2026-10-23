@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../features/auth/auth_provider.dart';
+import '../theme/app_colors.dart';
 import '../../features/schedule/dosen_schedule_screen.dart';
 import '../../features/schedule/admin_schedule_screen.dart';
 import '../../features/meeting/presensi_dosen_screen.dart';
@@ -24,42 +24,51 @@ class _DosenHomeShellState extends ConsumerState<DosenHomeShell> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final navBg = isDark ? AppColors.darkSurface : AppColors.surface;
+    final activeColor = isDark ? AppColors.accent : AppColors.primary;
+    final unselectedColor = isDark ? AppColors.darkTextMuted : AppColors.textMuted;
+
     return Scaffold(
-      extendBody: true, // Allows body to flow under the floating nav bar
-      backgroundColor: const Color(0xFFF4F6F9),
+      extendBody: true,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: _buildBody(),
       bottomNavigationBar: SafeArea(
         child: Container(
-          margin: const EdgeInsets.only(left: 24, right: 24, bottom: 16),
-          height: 70,
+          margin: const EdgeInsets.only(left: 20, right: 20, bottom: 16),
+          height: 68,
           decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(35),
+            color: navBg,
+            borderRadius: BorderRadius.circular(34),
+            border: Border.all(
+              color: isDark ? AppColors.darkBorder : AppColors.border,
+              width: 1,
+            ),
             boxShadow: [
               BoxShadow(
-                color: Colors.blueAccent.withOpacity(0.15),
-                blurRadius: 30,
-                offset: const Offset(0, 10),
+                color: activeColor.withOpacity(0.12),
+                blurRadius: 24,
+                offset: const Offset(0, 8),
               ),
             ],
           ),
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(35),
+            borderRadius: BorderRadius.circular(34),
             child: BottomNavigationBar(
               currentIndex: _currentIndex,
               onTap: (index) => setState(() => _currentIndex = index),
               elevation: 0,
               backgroundColor: Colors.transparent,
               type: BottomNavigationBarType.fixed,
-              selectedItemColor: const Color(0xFF2E3192),
-              unselectedItemColor: Colors.grey.shade400,
+              selectedItemColor: activeColor,
+              unselectedItemColor: unselectedColor,
               showSelectedLabels: true,
               showUnselectedLabels: false,
-              selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+              selectedLabelStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12),
               items: [
-                _buildNavItem(Icons.dashboard_rounded, 'Jadwal', 0),
-                _buildNavItem(Icons.qr_code_scanner_rounded, 'Presensi', 1),
-                _buildNavItem(Icons.edit_document, 'Izin', 2),
+                _buildNavItem(Icons.calendar_today_rounded, 'Jadwal', activeColor),
+                _buildNavItem(Icons.qr_code_scanner_rounded, 'Presensi', activeColor),
+                _buildNavItem(Icons.assignment_turned_in_rounded, 'Izin', activeColor),
                 BottomNavigationBarItem(
                   icon: Badge(
                     label: Text('${ref.watch(unreadCountProvider)}'),
@@ -69,13 +78,13 @@ class _DosenHomeShellState extends ConsumerState<DosenHomeShell> {
                   activeIcon: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF2E3192).withOpacity(0.1),
+                      color: activeColor.withOpacity(0.12),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Badge(
                       label: Text('${ref.watch(unreadCountProvider)}'),
                       isLabelVisible: ref.watch(unreadCountProvider) > 0,
-                      child: const Icon(Icons.notifications_rounded),
+                      child: Icon(Icons.notifications_rounded, color: activeColor),
                     ),
                   ),
                   label: 'Notif',
@@ -88,16 +97,16 @@ class _DosenHomeShellState extends ConsumerState<DosenHomeShell> {
     );
   }
 
-  BottomNavigationBarItem _buildNavItem(IconData icon, String label, int index) {
+  BottomNavigationBarItem _buildNavItem(IconData icon, String label, Color activeColor) {
     return BottomNavigationBarItem(
       icon: Icon(icon),
       activeIcon: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          color: const Color(0xFF2E3192).withOpacity(0.1),
+          color: activeColor.withOpacity(0.12),
           borderRadius: BorderRadius.circular(20),
         ),
-        child: Icon(icon),
+        child: Icon(icon, color: activeColor),
       ),
       label: label,
     );
@@ -131,44 +140,53 @@ class _AdminHomeShellState extends ConsumerState<AdminHomeShell> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final navBg = isDark ? AppColors.darkSurface : AppColors.surface;
+    final activeColor = isDark ? AppColors.accent : AppColors.primary;
+    final unselectedColor = isDark ? AppColors.darkTextMuted : AppColors.textMuted;
+
     return Scaffold(
       extendBody: true,
-      backgroundColor: const Color(0xFFF4F6F9),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: _buildBody(),
       bottomNavigationBar: SafeArea(
         child: Container(
           margin: const EdgeInsets.only(left: 16, right: 16, bottom: 16),
-          height: 70,
+          height: 68,
           decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(35),
+            color: navBg,
+            borderRadius: BorderRadius.circular(34),
+            border: Border.all(
+              color: isDark ? AppColors.darkBorder : AppColors.border,
+              width: 1,
+            ),
             boxShadow: [
               BoxShadow(
-                color: Colors.blueAccent.withOpacity(0.15),
-                blurRadius: 30,
-                offset: const Offset(0, 10),
+                color: activeColor.withOpacity(0.12),
+                blurRadius: 24,
+                offset: const Offset(0, 8),
               ),
             ],
           ),
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(35),
+            borderRadius: BorderRadius.circular(34),
             child: BottomNavigationBar(
               currentIndex: _currentIndex,
               onTap: (index) => setState(() => _currentIndex = index),
               elevation: 0,
               backgroundColor: Colors.transparent,
               type: BottomNavigationBarType.fixed,
-              selectedItemColor: const Color(0xFF2E3192),
-              unselectedItemColor: Colors.grey.shade400,
+              selectedItemColor: activeColor,
+              unselectedItemColor: unselectedColor,
               showSelectedLabels: true,
               showUnselectedLabels: false,
-              selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11),
+              selectedLabelStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 11),
               items: [
-                _buildNavItem(Icons.dashboard_rounded, 'Dasbor'),
-                _buildNavItem(Icons.schedule_rounded, 'Jadwal'),
-                _buildNavItem(Icons.group_add_rounded, 'Mhs'),
-                _buildNavItem(Icons.storage_rounded, 'Master'),
-                _buildNavItem(Icons.edit_document, 'Izin'),
+                _buildNavItem(Icons.space_dashboard_rounded, 'Dasbor', activeColor),
+                _buildNavItem(Icons.calendar_today_rounded, 'Jadwal', activeColor),
+                _buildNavItem(Icons.groups_rounded, 'Mhs', activeColor),
+                _buildNavItem(Icons.dns_rounded, 'Master', activeColor),
+                _buildNavItem(Icons.assignment_turned_in_rounded, 'Izin', activeColor),
               ],
             ),
           ),
@@ -177,16 +195,16 @@ class _AdminHomeShellState extends ConsumerState<AdminHomeShell> {
     );
   }
 
-  BottomNavigationBarItem _buildNavItem(IconData icon, String label) {
+  BottomNavigationBarItem _buildNavItem(IconData icon, String label, Color activeColor) {
     return BottomNavigationBarItem(
       icon: Icon(icon),
       activeIcon: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
-          color: const Color(0xFF2E3192).withOpacity(0.1),
+          color: activeColor.withOpacity(0.12),
           borderRadius: BorderRadius.circular(20),
         ),
-        child: Icon(icon),
+        child: Icon(icon, color: activeColor),
       ),
       label: label,
     );

@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dio/dio.dart';
 import 'package:file_picker/file_picker.dart';
-import 'dart:typed_data';
-import 'package:flutter/foundation.dart'; // import kIsWeb
+import 'package:flutter/foundation.dart'; // import kIsWeb & provides Uint8List
 import '../../core/api/api_client.dart';
+import '../../core/theme/app_colors.dart';
 
 class AddClassDialog extends ConsumerStatefulWidget {
   final VoidCallback onSuccess;
@@ -31,6 +31,15 @@ class _AddClassDialogState extends ConsumerState<AddClassDialog> {
   String? _errorMessage;
   bool _isLoading = false;
 
+  @override
+  void dispose() {
+    nameCtrl.dispose();
+    semCtrl.dispose();
+    nimCtrl.dispose();
+    fullNameCtrl.dispose();
+    super.dispose();
+  }
+
   Future<void> _pickFile() async {
     FilePickerResult? result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
@@ -43,7 +52,7 @@ class _AddClassDialogState extends ConsumerState<AddClassDialog> {
         _fileBytes = result.files.single.bytes;
         _filePath = kIsWeb ? null : result.files.single.path;
         _fileName = result.files.single.name;
-        _previewData = null; 
+        _previewData = null;
         _errorMessage = null;
       });
       _getPreview();
@@ -52,7 +61,7 @@ class _AddClassDialogState extends ConsumerState<AddClassDialog> {
 
   Future<void> _getPreview() async {
     if ((_filePath == null && _fileBytes == null) || semCtrl.text.isEmpty) return;
-    
+
     setState(() {
       _isLoading = true;
       _errorMessage = null;
@@ -104,7 +113,7 @@ class _AddClassDialogState extends ConsumerState<AddClassDialog> {
     setState(() => _isLoading = true);
     try {
       final dio = ref.read(dioProvider);
-      
+
       if (_selectedIndex == 0) {
         // Manual
         if (nameCtrl.text.isEmpty || nimCtrl.text.isEmpty || fullNameCtrl.text.isEmpty) {
@@ -133,11 +142,16 @@ class _AddClassDialogState extends ConsumerState<AddClassDialog> {
 
         await dio.post('/students/import', data: formData);
       }
-      
+
       widget.onSuccess();
       if (mounted) {
         Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Kelas berhasil ditambahkan!')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Kelas berhasil ditambahkan!'),
+            backgroundColor: AppColors.statusHadir,
+          ),
+        );
       }
     } catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Gagal: $e')));
@@ -170,12 +184,15 @@ class _AddClassDialogState extends ConsumerState<AddClassDialog> {
             const SizedBox(height: 16),
             if (_selectedIndex == 0) ...[
               const Text('Masukkan 1 mahasiswa pertama di kelas ini:'),
+              const SizedBox(height: 8),
               TextField(controller: nameCtrl, decoration: const InputDecoration(labelText: 'Nama Kelas (mis: TI-3A)')),
+              const SizedBox(height: 8),
               TextField(controller: nimCtrl, decoration: const InputDecoration(labelText: 'NIM Mahasiswa')),
+              const SizedBox(height: 8),
               TextField(controller: fullNameCtrl, decoration: const InputDecoration(labelText: 'Nama Lengkap Mahasiswa')),
             ] else ...[
               ElevatedButton.icon(
-                icon: const Icon(Icons.file_upload),
+                icon: const Icon(Icons.file_upload_outlined),
                 label: Text(_fileName ?? 'Pilih File Excel (.xlsx)'),
                 onPressed: _isLoading ? null : _pickFile,
               ),
@@ -184,19 +201,25 @@ class _AddClassDialogState extends ConsumerState<AddClassDialog> {
                 const SizedBox(height: 16),
                 Container(
                   padding: const EdgeInsets.all(12),
-                  color: Colors.red.shade50,
-                  child: Text(_errorMessage!, style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+                  decoration: BoxDecoration(
+                    color: AppColors.statusAlpaBg,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(_errorMessage!, style: const TextStyle(color: AppColors.statusAlpa, fontWeight: FontWeight.bold)),
                 ),
               ],
               if (_previewData != null && !_isLoading) ...[
                 const SizedBox(height: 16),
                 Container(
                   padding: const EdgeInsets.all(12),
-                  color: Colors.blue.shade50,
+                  decoration: BoxDecoration(
+                    color: AppColors.statusHadirBg,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('Preview Data:', style: TextStyle(fontWeight: FontWeight.bold)),
+                      const Text('Preview Data:', style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.statusHadir)),
                       Text('Total Data: ${_previewData!['totalRows']} Mahasiswa'),
                       Text('Deteksi Kelas: ${_previewData!['sampleClass']}'),
                       const Divider(),

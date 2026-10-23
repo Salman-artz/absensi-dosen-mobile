@@ -3,27 +3,20 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:dio/dio.dart';
 import '../../core/api/api_client.dart';
-import '../auth/auth_provider.dart';
 import '../schedule/schedule_provider.dart';
+import '../auth/auth_provider.dart';
 import 'add_class_dialog.dart';
+import '../../core/theme/app_colors.dart';
+import '../../core/theme/theme_provider.dart';
 
-class AdminStudentScreen extends ConsumerWidget {
+class AdminStudentScreen extends ConsumerStatefulWidget {
   const AdminStudentScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return const _ClassListTab();
-  }
+  ConsumerState<AdminStudentScreen> createState() => _AdminStudentScreenState();
 }
 
-class _ClassListTab extends ConsumerStatefulWidget {
-  const _ClassListTab();
-
-  @override
-  ConsumerState<_ClassListTab> createState() => _ClassListTabState();
-}
-
-class _ClassListTabState extends ConsumerState<_ClassListTab> {
+class _AdminStudentScreenState extends ConsumerState<AdminStudentScreen> {
   bool isLoading = true;
   List<dynamic> classes = [];
 
@@ -34,40 +27,60 @@ class _ClassListTabState extends ConsumerState<_ClassListTab> {
   }
 
   Future<void> _fetchClasses() async {
+    setState(() => isLoading = true);
     try {
       final dio = ref.read(dioProvider);
       final res = await dio.get('/students/classes');
       if (mounted) {
         setState(() {
-          classes = res.data['data'];
+          classes = res.data['data'] ?? [];
           isLoading = false;
         });
       }
+    } on DioException catch (e) {
+      final msg = e.response?.data?['message'] ?? e.message;
+      if (mounted) {
+        setState(() => isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $msg')));
+      }
     } catch (e) {
-      if (mounted) setState(() => isLoading = false);
+      if (mounted) {
+        setState(() => isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF4F6F9),
+      backgroundColor: Colors.transparent,
       body: CustomScrollView(
         physics: const BouncingScrollPhysics(),
         slivers: [
           SliverAppBar(
-            expandedHeight: 160.0,
+            expandedHeight: 150.0,
             floating: false,
             pinned: true,
             elevation: 0,
-            backgroundColor: const Color(0xFF2E3192),
+            backgroundColor: isDark ? AppColors.darkSurface : AppColors.primaryDark,
             actions: [
+              IconButton(
+                tooltip: isDark ? 'Mode Terang' : 'Mode Gelap',
+                icon: Icon(
+                  isDark ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
+                  color: Colors.white,
+                ),
+                onPressed: () => ref.read(themeModeProvider.notifier).toggleTheme(),
+              ),
               Padding(
                 padding: const EdgeInsets.only(right: 16.0),
                 child: CircleAvatar(
-                  backgroundColor: Colors.white,
+                  backgroundColor: Colors.white.withOpacity(0.2),
                   child: IconButton(
-                    icon: const Icon(Icons.logout_rounded, color: Colors.redAccent),
+                    icon: const Icon(Icons.logout_rounded, color: Colors.white),
                     onPressed: () => ref.read(authProvider.notifier).logout(),
                     tooltip: 'Keluar',
                   ),
@@ -76,17 +89,21 @@ class _ClassListTabState extends ConsumerState<_ClassListTab> {
             ],
             flexibleSpace: FlexibleSpaceBar(
               titlePadding: const EdgeInsets.only(left: 24, bottom: 16),
-              title: const Text('Grup Kelas & Mahasiswa', style: TextStyle(fontWeight: FontWeight.w800, color: Colors.white, fontSize: 20, letterSpacing: -0.5)),
+              title: const Text(
+                'Grup Kelas Mahasiswa',
+                style: TextStyle(
+                  fontWeight: FontWeight.w800,
+                  color: Colors.white,
+                  fontSize: 22,
+                  letterSpacing: -0.5,
+                ),
+              ),
               background: Container(
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [Color(0xFF2E3192), Color(0xFF1BFFFF)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.only(
-                    bottomLeft: Radius.circular(40),
-                    bottomRight: Radius.circular(40),
+                decoration: BoxDecoration(
+                  gradient: isDark ? AppColors.darkPrimaryGradient : AppColors.primaryGradient,
+                  borderRadius: const BorderRadius.only(
+                    bottomLeft: Radius.circular(36),
+                    bottomRight: Radius.circular(36),
                   ),
                 ),
                 child: Stack(
@@ -94,26 +111,30 @@ class _ClassListTabState extends ConsumerState<_ClassListTab> {
                     Positioned(
                       right: -10,
                       top: -10,
-                      child: Icon(Icons.group_rounded, size: 140, color: Colors.white.withOpacity(0.15)),
+                      child: Icon(
+                        Icons.group_rounded,
+                        size: 130,
+                        color: Colors.white.withOpacity(0.12),
+                      ),
                     ),
                   ],
                 ),
               ),
             ),
           ),
-          
+
           SliverPadding(
             padding: const EdgeInsets.only(top: 24, left: 16, right: 16, bottom: 100),
-            sliver: _buildListContent(),
+            sliver: _buildListContent(isDark),
           ),
         ],
       ),
       floatingActionButton: Padding(
-        padding: const EdgeInsets.only(bottom: 90.0),
+        padding: const EdgeInsets.only(bottom: 86.0),
         child: FloatingActionButton.extended(
-          backgroundColor: const Color(0xFF2E3192),
+          backgroundColor: isDark ? AppColors.primaryLight : AppColors.primary,
           foregroundColor: Colors.white,
-          elevation: 8,
+          elevation: 6,
           onPressed: () {
             showDialog(
               context: context,
@@ -122,13 +143,13 @@ class _ClassListTabState extends ConsumerState<_ClassListTab> {
             );
           },
           icon: const Icon(Icons.group_add_rounded),
-          label: const Text('Tambah Kelas', style: TextStyle(fontWeight: FontWeight.bold)),
+          label: const Text('Tambah Kelas', style: TextStyle(fontWeight: FontWeight.w700)),
         ),
       ),
     );
   }
 
-  Widget _buildListContent() {
+  Widget _buildListContent(bool isDark) {
     if (isLoading) return const SliverFillRemaining(child: Center(child: CircularProgressIndicator()));
     if (classes.isEmpty) {
       return SliverFillRemaining(
@@ -137,9 +158,20 @@ class _ClassListTabState extends ConsumerState<_ClassListTab> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.group_off_rounded, size: 80, color: Colors.grey.shade400),
+              Icon(
+                Icons.group_off_rounded,
+                size: 70,
+                color: isDark ? AppColors.darkTextMuted : AppColors.textMuted,
+              ),
               const SizedBox(height: 16),
-              Text('Belum ada grup kelas', style: TextStyle(color: Colors.grey.shade600, fontSize: 16, fontWeight: FontWeight.bold)),
+              Text(
+                'Belum ada grup kelas',
+                style: TextStyle(
+                  color: isDark ? AppColors.darkTextMuted : AppColors.textMuted,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
             ],
           ),
         ),
@@ -151,14 +183,22 @@ class _ClassListTabState extends ConsumerState<_ClassListTab> {
         (context, index) {
           final c = classes[index];
           final safeSemester = Uri.encodeComponent(c['semester']);
-          
+
           return Container(
-            margin: const EdgeInsets.only(bottom: 16),
+            margin: const EdgeInsets.only(bottom: 14),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: isDark ? AppColors.darkSurface : AppColors.surface,
               borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: isDark ? AppColors.darkBorder : AppColors.border,
+                width: 1,
+              ),
               boxShadow: [
-                BoxShadow(color: const Color(0xFF2E3192).withOpacity(0.05), blurRadius: 15, offset: const Offset(0, 5)),
+                BoxShadow(
+                  color: Colors.black.withOpacity(isDark ? 0.25 : 0.04),
+                  blurRadius: 14,
+                  offset: const Offset(0, 4),
+                ),
               ],
             ),
             child: ClipRRect(
@@ -168,7 +208,7 @@ class _ClassListTabState extends ConsumerState<_ClassListTab> {
                   context.push('/class-group-students/${c['className']}/$safeSemester').then((_) => _fetchClasses());
                 },
                 child: Padding(
-                  padding: const EdgeInsets.all(20.0),
+                  padding: const EdgeInsets.all(18.0),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -178,63 +218,87 @@ class _ClassListTabState extends ConsumerState<_ClassListTab> {
                           Row(
                             children: [
                               CircleAvatar(
-                                backgroundColor: const Color(0xFFE8FAFF),
-                                foregroundColor: const Color(0xFF2E3192),
-                                radius: 24,
-                                child: const Icon(Icons.people_alt_rounded),
+                                radius: 22,
+                                backgroundColor: (isDark ? AppColors.accent : AppColors.primary).withOpacity(0.12),
+                                foregroundColor: isDark ? AppColors.accent : AppColors.primary,
+                                child: const Icon(Icons.people_alt_rounded, size: 22),
                               ),
-                              const SizedBox(width: 16),
+                              const SizedBox(width: 14),
                               Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
                                     'Kelas ${c['className']}',
-                                    style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 18, color: Color(0xFF2E3192)),
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w800,
+                                      fontSize: 16,
+                                      color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+                                    ),
                                   ),
-                                  const SizedBox(height: 4),
+                                  const SizedBox(height: 3),
                                   Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                                     decoration: BoxDecoration(
-                                      color: Colors.grey.shade100,
+                                      color: isDark ? AppColors.darkSurfaceVariant : AppColors.surfaceVariant,
                                       borderRadius: BorderRadius.circular(8),
                                     ),
                                     child: Text(
                                       c['semester'],
-                                      style: TextStyle(color: Colors.grey.shade700, fontSize: 12, fontWeight: FontWeight.bold),
+                                      style: TextStyle(
+                                        color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w700,
+                                      ),
                                     ),
                                   ),
                                 ],
                               ),
                             ],
                           ),
-                          const Icon(Icons.arrow_forward_ios_rounded, color: Colors.grey, size: 16),
+                          Icon(
+                            Icons.arrow_forward_ios_rounded,
+                            color: isDark ? AppColors.darkTextMuted : AppColors.textMuted,
+                            size: 14,
+                          ),
                         ],
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 14),
                       const Divider(height: 1),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 10),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Row(
                             children: [
-                              const Icon(Icons.person_rounded, size: 18, color: Colors.grey),
-                              const SizedBox(width: 8),
-                              Text('${c['totalStudents']} Mahasiswa', style: const TextStyle(color: Colors.black87, fontWeight: FontWeight.bold)),
+                              Icon(
+                                Icons.person_rounded,
+                                size: 16,
+                                color: isDark ? AppColors.darkTextMuted : AppColors.textMuted,
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                '${c['totalStudents']} Mahasiswa',
+                                style: TextStyle(
+                                  color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 13,
+                                ),
+                              ),
                             ],
                           ),
                           Row(
                             children: [
                               IconButton(
                                 constraints: const BoxConstraints(),
-                                padding: const EdgeInsets.all(8),
-                                icon: const Icon(Icons.edit_rounded, color: Colors.orange, size: 20),
+                                padding: const EdgeInsets.all(6),
+                                icon: const Icon(Icons.edit_outlined, color: AppColors.statusTelat, size: 18),
                                 onPressed: () => _editClass(c['className'], c['semester']),
                               ),
+                              const SizedBox(width: 8),
                               IconButton(
                                 constraints: const BoxConstraints(),
-                                padding: const EdgeInsets.all(8),
-                                icon: const Icon(Icons.delete_rounded, color: Colors.redAccent, size: 20),
+                                padding: const EdgeInsets.all(6),
+                                icon: const Icon(Icons.delete_outline, color: AppColors.statusAlpa, size: 18),
                                 onPressed: () => _deleteClass(c['className'], c['semester']),
                               ),
                             ],
@@ -256,35 +320,37 @@ class _ClassListTabState extends ConsumerState<_ClassListTab> {
   Future<void> _editClass(String oldName, String oldSem) async {
     final nameCtrl = TextEditingController(text: oldName);
     final semCtrl = TextEditingController(text: oldSem);
-    
+
     await showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Edit Grup Kelas', style: TextStyle(fontWeight: FontWeight.bold)),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      builder: (ctx) => AlertDialog(
+        title: const Text('Edit Grup Kelas'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            TextField(controller: nameCtrl, decoration: InputDecoration(labelText: 'Nama Kelas', border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)))),
-            const SizedBox(height: 16),
-            TextField(controller: semCtrl, decoration: InputDecoration(labelText: 'Semester', border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)))),
+            TextField(controller: nameCtrl, decoration: const InputDecoration(labelText: 'Nama Kelas')),
+            const SizedBox(height: 12),
+            TextField(controller: semCtrl, decoration: const InputDecoration(labelText: 'Semester')),
           ],
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Batal')),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Batal')),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF2E3192), foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
             onPressed: () async {
-              if (nameCtrl.text.isEmpty || semCtrl.text.isEmpty) return;
-              Navigator.pop(context);
+              if (nameCtrl.text.trim().isEmpty || semCtrl.text.trim().isEmpty) return;
+              Navigator.pop(ctx);
               try {
                 final dio = ref.read(dioProvider);
                 await dio.put('/students/classes/$oldName/${Uri.encodeComponent(oldSem)}', data: {
-                  'newClassName': nameCtrl.text,
-                  'newSemester': semCtrl.text,
+                  'newClassName': nameCtrl.text.trim(),
+                  'newSemester': semCtrl.text.trim(),
                 });
                 _fetchClasses();
-                if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Kelas diupdate')));
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Kelas berhasil diperbarui')),
+                  );
+                }
               } catch (e) {
                 if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Gagal: $e')));
               }
@@ -299,16 +365,17 @@ class _ClassListTabState extends ConsumerState<_ClassListTab> {
   Future<void> _deleteClass(String name, String sem) async {
     final confirm = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Hapus Grup Kelas?', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.red)),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        content: Text('PERHATIAN: Menghapus grup $name akan menghapus SELURUH JADWAL matkul untuk kelas ini, beserta seluruh data riwayat presensinya! Yakin?'),
+      builder: (ctx) => AlertDialog(
+        title: const Text('Hapus Grup Kelas?', style: TextStyle(color: AppColors.statusAlpa)),
+        content: Text(
+          'Menghapus grup $name akan menghapus seluruh jadwal dan riwayat presensi terkait. Lanjutkan?',
+        ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Batal', style: TextStyle(color: Colors.grey))),
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Batal')),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
-            onPressed: () => Navigator.pop(context, true), 
-            child: const Text('Hapus Permanen'),
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.statusAlpa),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Hapus Permanen', style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -319,8 +386,12 @@ class _ClassListTabState extends ConsumerState<_ClassListTab> {
       final dio = ref.read(dioProvider);
       await dio.delete('/students/classes/$name/${Uri.encodeComponent(sem)}');
       _fetchClasses();
-      ref.invalidate(scheduleListProvider); // jadwal juga terhapus, perlu refresh
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Kelas beserta seluruh jadwalnya dihapus')));
+      ref.invalidate(scheduleListProvider);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Kelas berhasil dihapus')),
+        );
+      }
     } catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Gagal: $e')));
     }

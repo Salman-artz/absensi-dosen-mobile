@@ -5,6 +5,8 @@ import 'leave_provider.dart';
 import '../../core/api/api_client.dart';
 import 'package:intl/intl.dart';
 import '../auth/auth_provider.dart';
+import '../../core/theme/app_colors.dart';
+import '../../core/theme/theme_provider.dart';
 
 class DosenLeaveScreen extends ConsumerStatefulWidget {
   const DosenLeaveScreen({super.key});
@@ -14,30 +16,39 @@ class DosenLeaveScreen extends ConsumerStatefulWidget {
 }
 
 class _DosenLeaveScreenState extends ConsumerState<DosenLeaveScreen> {
-  int _selectedFilter = 0; // 0 = On Going, 1 = Sudah Lewat
+  int _selectedFilter = 0; // 0 = Sedang Berjalan, 1 = Sudah Lewat
 
   @override
   Widget build(BuildContext context) {
     final leaveAsync = ref.watch(leaveRequestsProvider);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: Colors.transparent,
       body: CustomScrollView(
         physics: const BouncingScrollPhysics(),
         slivers: [
           SliverAppBar(
-            expandedHeight: 140.0,
+            expandedHeight: 150.0,
             floating: false,
             pinned: true,
             elevation: 0,
-            backgroundColor: const Color(0xFF2E3192),
+            backgroundColor: isDark ? AppColors.darkSurface : AppColors.primaryDark,
             actions: [
+              IconButton(
+                tooltip: isDark ? 'Mode Terang' : 'Mode Gelap',
+                icon: Icon(
+                  isDark ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
+                  color: Colors.white,
+                ),
+                onPressed: () => ref.read(themeModeProvider.notifier).toggleTheme(),
+              ),
               Padding(
                 padding: const EdgeInsets.only(right: 16.0),
                 child: CircleAvatar(
-                  backgroundColor: Colors.white,
+                  backgroundColor: Colors.white.withOpacity(0.2),
                   child: IconButton(
-                    icon: const Icon(Icons.logout_rounded, color: Colors.redAccent),
+                    icon: const Icon(Icons.logout_rounded, color: Colors.white),
                     onPressed: () => ref.read(authProvider.notifier).logout(),
                     tooltip: 'Keluar',
                   ),
@@ -46,17 +57,21 @@ class _DosenLeaveScreenState extends ConsumerState<DosenLeaveScreen> {
             ],
             flexibleSpace: FlexibleSpaceBar(
               titlePadding: const EdgeInsets.only(left: 24, bottom: 16),
-              title: const Text('Riwayat Izin & Cuti', style: TextStyle(fontWeight: FontWeight.w800, color: Colors.white, fontSize: 20, letterSpacing: -0.5)),
+              title: const Text(
+                'Riwayat Izin & Cuti',
+                style: TextStyle(
+                  fontWeight: FontWeight.w800,
+                  color: Colors.white,
+                  fontSize: 22,
+                  letterSpacing: -0.5,
+                ),
+              ),
               background: Container(
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [Color(0xFF2E3192), Color(0xFF1BFFFF)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.only(
-                    bottomLeft: Radius.circular(30),
-                    bottomRight: Radius.circular(30),
+                decoration: BoxDecoration(
+                  gradient: isDark ? AppColors.darkPrimaryGradient : AppColors.primaryGradient,
+                  borderRadius: const BorderRadius.only(
+                    bottomLeft: Radius.circular(36),
+                    bottomRight: Radius.circular(36),
                   ),
                 ),
                 child: Stack(
@@ -64,34 +79,50 @@ class _DosenLeaveScreenState extends ConsumerState<DosenLeaveScreen> {
                     Positioned(
                       right: -10,
                       top: -10,
-                      child: Icon(Icons.edit_document, size: 120, color: Colors.white.withOpacity(0.15)),
+                      child: Icon(
+                        Icons.edit_document,
+                        size: 130,
+                        color: Colors.white.withOpacity(0.12),
+                      ),
                     ),
                   ],
                 ),
               ),
             ),
           ),
+
+          // Filter Segment Bar
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.only(left: 16, right: 16, top: 16),
+              padding: const EdgeInsets.only(left: 16, right: 16, top: 20),
               child: Row(
                 children: [
                   Expanded(
                     child: InkWell(
                       onTap: () => setState(() => _selectedFilter = 0),
+                      borderRadius: BorderRadius.circular(14),
                       child: Container(
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         decoration: BoxDecoration(
-                          color: _selectedFilter == 0 ? const Color(0xFF2E3192) : Colors.white,
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: _selectedFilter == 0 ? const Color(0xFF2E3192) : Colors.grey.shade300),
+                          color: _selectedFilter == 0
+                              ? (isDark ? AppColors.primaryLight : AppColors.primary)
+                              : (isDark ? AppColors.darkSurface : AppColors.surface),
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(
+                            color: _selectedFilter == 0
+                                ? (isDark ? AppColors.primaryLight : AppColors.primary)
+                                : (isDark ? AppColors.darkBorder : AppColors.border),
+                          ),
                         ),
                         child: Center(
                           child: Text(
                             'Sedang Berjalan',
                             style: TextStyle(
-                              color: _selectedFilter == 0 ? Colors.white : Colors.grey.shade600,
-                              fontWeight: FontWeight.bold,
+                              color: _selectedFilter == 0
+                                  ? Colors.white
+                                  : (isDark ? AppColors.darkTextSecondary : AppColors.textSecondary),
+                              fontWeight: FontWeight.w700,
+                              fontSize: 13,
                             ),
                           ),
                         ),
@@ -102,19 +133,29 @@ class _DosenLeaveScreenState extends ConsumerState<DosenLeaveScreen> {
                   Expanded(
                     child: InkWell(
                       onTap: () => setState(() => _selectedFilter = 1),
+                      borderRadius: BorderRadius.circular(14),
                       child: Container(
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         decoration: BoxDecoration(
-                          color: _selectedFilter == 1 ? const Color(0xFF2E3192) : Colors.white,
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: _selectedFilter == 1 ? const Color(0xFF2E3192) : Colors.grey.shade300),
+                          color: _selectedFilter == 1
+                              ? (isDark ? AppColors.primaryLight : AppColors.primary)
+                              : (isDark ? AppColors.darkSurface : AppColors.surface),
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(
+                            color: _selectedFilter == 1
+                                ? (isDark ? AppColors.primaryLight : AppColors.primary)
+                                : (isDark ? AppColors.darkBorder : AppColors.border),
+                          ),
                         ),
                         child: Center(
                           child: Text(
                             'Sudah Lewat',
                             style: TextStyle(
-                              color: _selectedFilter == 1 ? Colors.white : Colors.grey.shade600,
-                              fontWeight: FontWeight.bold,
+                              color: _selectedFilter == 1
+                                  ? Colors.white
+                                  : (isDark ? AppColors.darkTextSecondary : AppColors.textSecondary),
+                              fontWeight: FontWeight.w700,
+                              fontSize: 13,
                             ),
                           ),
                         ),
@@ -125,23 +166,22 @@ class _DosenLeaveScreenState extends ConsumerState<DosenLeaveScreen> {
               ),
             ),
           ),
+
           SliverPadding(
             padding: const EdgeInsets.only(top: 16, left: 16, right: 16, bottom: 100),
             sliver: leaveAsync.when(
               data: (allLeaves) {
                 final now = DateTime.now();
                 final today = DateTime(now.year, now.month, now.day);
-                
+
                 final leaves = allLeaves.where((leave) {
                   final endDate = DateTime.parse(leave['endDate']);
                   final endDay = DateTime(endDate.year, endDate.month, endDate.day);
                   final isRejected = leave['status'] == 'REJECTED';
-                  
+
                   if (_selectedFilter == 0) {
-                    // Sedang Berjalan: Belum ditolak DAN tanggal selesai belum lewat
                     return !isRejected && (endDay.isAfter(today) || endDay.isAtSameMomentAs(today));
                   } else {
-                    // Sudah Lewat: Sudah ditolak ATAU tanggal selesai sudah lewat
                     return isRejected || endDay.isBefore(today);
                   }
                 }).toList();
@@ -153,38 +193,45 @@ class _DosenLeaveScreenState extends ConsumerState<DosenLeaveScreen> {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.edit_document, size: 80, color: Colors.grey[300]),
+                          Icon(
+                            Icons.edit_document,
+                            size: 70,
+                            color: isDark ? AppColors.darkTextMuted : AppColors.textMuted,
+                          ),
                           const SizedBox(height: 16),
                           Text(
-                            _selectedFilter == 0 ? 'Tidak ada izin yang sedang berjalan.' : 'Belum ada riwayat izin.', 
-                            style: TextStyle(color: Colors.grey[500], fontSize: 16, fontWeight: FontWeight.bold)
+                            _selectedFilter == 0 ? 'Tidak ada pengajuan izin berjalan' : 'Belum ada riwayat izin',
+                            style: TextStyle(
+                              color: isDark ? AppColors.darkTextMuted : AppColors.textMuted,
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                         ],
                       ),
                     ),
                   );
                 }
+
                 return SliverList(
                   delegate: SliverChildBuilderDelegate(
                     (context, index) {
                       final leave = leaves[index];
-                      
-                      Color badgeColor = Colors.grey;
-                      Color badgeBg = Colors.grey.shade100;
+                      Color badgeColor = AppColors.textMuted;
+                      Color badgeBg = isDark ? AppColors.darkSurfaceVariant : AppColors.surfaceVariant;
                       IconData statusIcon = Icons.hourglass_empty;
+
                       if (leave['status'] == 'PENDING') {
-                        badgeColor = Colors.orange;
-                        badgeBg = Colors.orange.shade50;
+                        badgeColor = AppColors.statusTelat;
+                        badgeBg = AppColors.getStatusBgColor('TELAT', isDark: isDark);
                         statusIcon = Icons.pending_actions_rounded;
-                      }
-                      if (leave['status'] == 'APPROVED') {
-                        badgeColor = Colors.green;
-                        badgeBg = Colors.green.shade50;
+                      } else if (leave['status'] == 'APPROVED') {
+                        badgeColor = AppColors.statusHadir;
+                        badgeBg = AppColors.getStatusBgColor('HADIR', isDark: isDark);
                         statusIcon = Icons.check_circle_rounded;
-                      }
-                      if (leave['status'] == 'REJECTED') {
-                        badgeColor = Colors.red;
-                        badgeBg = Colors.red.shade50;
+                      } else if (leave['status'] == 'REJECTED') {
+                        badgeColor = AppColors.statusAlpa;
+                        badgeBg = AppColors.getStatusBgColor('ALPHA', isDark: isDark);
                         statusIcon = Icons.cancel_rounded;
                       }
 
@@ -193,16 +240,24 @@ class _DosenLeaveScreenState extends ConsumerState<DosenLeaveScreen> {
                       final end = format.format(DateTime.parse(leave['endDate']));
 
                       return Container(
-                        margin: const EdgeInsets.only(bottom: 16),
+                        margin: const EdgeInsets.only(bottom: 14),
                         decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(20),
+                          color: isDark ? AppColors.darkSurface : AppColors.surface,
+                          borderRadius: BorderRadius.circular(18),
+                          border: Border.all(
+                            color: isDark ? AppColors.darkBorder : AppColors.border,
+                            width: 1,
+                          ),
                           boxShadow: [
-                            BoxShadow(color: const Color(0xFF2E3192).withOpacity(0.06), blurRadius: 15, offset: const Offset(0, 5)),
+                            BoxShadow(
+                              color: Colors.black.withOpacity(isDark ? 0.25 : 0.04),
+                              blurRadius: 12,
+                              offset: const Offset(0, 4),
+                            ),
                           ],
                         ),
                         child: Padding(
-                          padding: const EdgeInsets.all(20.0),
+                          padding: const EdgeInsets.all(18.0),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -212,58 +267,89 @@ class _DosenLeaveScreenState extends ConsumerState<DosenLeaveScreen> {
                                   Container(
                                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                                     decoration: BoxDecoration(
-                                      color: const Color(0xFF2E3192).withOpacity(0.08),
-                                      borderRadius: BorderRadius.circular(12),
+                                      color: (isDark ? AppColors.accent : AppColors.primary).withOpacity(0.12),
+                                      borderRadius: BorderRadius.circular(10),
                                     ),
                                     child: Text(
                                       leave['type'].toString().replaceAll('_', ' '),
-                                      style: const TextStyle(color: Color(0xFF2E3192), fontWeight: FontWeight.w800, fontSize: 13),
+                                      style: TextStyle(
+                                        color: isDark ? AppColors.accent : AppColors.primary,
+                                        fontWeight: FontWeight.w800,
+                                        fontSize: 12,
+                                      ),
                                     ),
                                   ),
                                   Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                                     decoration: BoxDecoration(
                                       color: badgeBg,
-                                      borderRadius: BorderRadius.circular(12),
-                                      border: Border.all(color: badgeColor.withOpacity(0.5)),
+                                      borderRadius: BorderRadius.circular(10),
+                                      border: Border.all(color: badgeColor.withOpacity(0.4)),
                                     ),
                                     child: Row(
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
                                         Icon(statusIcon, size: 14, color: badgeColor),
-                                        const SizedBox(width: 6),
+                                        const SizedBox(width: 5),
                                         Text(
                                           leave['status'],
-                                          style: TextStyle(color: badgeColor, fontSize: 12, fontWeight: FontWeight.bold),
+                                          style: TextStyle(
+                                            color: badgeColor,
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.w700,
+                                          ),
                                         ),
                                       ],
                                     ),
                                   ),
                                 ],
                               ),
-                              const SizedBox(height: 16),
+                              const SizedBox(height: 14),
                               Row(
                                 children: [
-                                  const Icon(Icons.date_range_rounded, size: 18, color: Colors.grey),
+                                  Icon(
+                                    Icons.date_range_rounded,
+                                    size: 16,
+                                    color: isDark ? AppColors.darkTextMuted : AppColors.textMuted,
+                                  ),
                                   const SizedBox(width: 8),
-                                  Text('$start  s/d  $end', style: const TextStyle(color: Colors.black87, fontWeight: FontWeight.w600)),
+                                  Text(
+                                    '$start  s/d  $end',
+                                    style: TextStyle(
+                                      color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 13,
+                                    ),
+                                  ),
                                 ],
                               ),
-                              const SizedBox(height: 12),
+                              const SizedBox(height: 10),
                               Container(
                                 width: double.infinity,
                                 padding: const EdgeInsets.all(12),
                                 decoration: BoxDecoration(
-                                  color: Colors.grey.shade50,
+                                  color: isDark ? AppColors.darkSurfaceVariant : AppColors.surfaceVariant,
                                   borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(color: Colors.grey.shade200),
                                 ),
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    const Text('Alasan:', style: TextStyle(fontSize: 12, color: Colors.grey, fontWeight: FontWeight.bold)),
-                                    const SizedBox(height: 4),
-                                    Text(leave['reason'] ?? '-', style: const TextStyle(color: Colors.black87)),
+                                    Text(
+                                      'Alasan:',
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        color: isDark ? AppColors.darkTextMuted : AppColors.textMuted,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 3),
+                                    Text(
+                                      leave['reason'] ?? '-',
+                                      style: TextStyle(
+                                        color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+                                        fontSize: 13,
+                                      ),
+                                    ),
                                   ],
                                 ),
                               ),
@@ -283,16 +369,16 @@ class _DosenLeaveScreenState extends ConsumerState<DosenLeaveScreen> {
         ],
       ),
       floatingActionButton: Padding(
-        padding: const EdgeInsets.only(bottom: 90.0), // Hindari tertutup oleh Floating Bottom Nav
+        padding: const EdgeInsets.only(bottom: 86.0),
         child: FloatingActionButton.extended(
-          backgroundColor: const Color(0xFF2E3192),
+          backgroundColor: isDark ? AppColors.primaryLight : AppColors.primary,
           foregroundColor: Colors.white,
-          elevation: 8,
+          elevation: 6,
           onPressed: () {
             showDialog(context: context, builder: (_) => const _AddLeaveDialog());
           },
           icon: const Icon(Icons.add_task_rounded),
-          label: const Text('Buat Pengajuan', style: TextStyle(fontWeight: FontWeight.bold)),
+          label: const Text('Buat Pengajuan', style: TextStyle(fontWeight: FontWeight.w700)),
         ),
       ),
     );
@@ -307,91 +393,101 @@ class _AddLeaveDialog extends ConsumerStatefulWidget {
 }
 
 class _AddLeaveDialogState extends ConsumerState<_AddLeaveDialog> {
-  String type = 'SAKIT';
-  final reasonController = TextEditingController();
+  String selectedType = 'IZIN';
   DateTime? startDate;
   DateTime? endDate;
+  final reasonController = TextEditingController();
   bool isSubmitting = false;
 
+  @override
+  void dispose() {
+    reasonController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _pickDate(bool isStart) async {
+    final now = DateTime.now();
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: isStart ? (startDate ?? now) : (endDate ?? startDate ?? now),
+      firstDate: now.subtract(const Duration(days: 30)),
+      lastDate: now.add(const Duration(days: 365)),
+    );
+    if (picked != null) {
+      setState(() {
+        if (isStart) {
+          startDate = picked;
+          if (endDate != null && endDate!.isBefore(startDate!)) {
+            endDate = startDate;
+          }
+        } else {
+          endDate = picked;
+        }
+      });
+    }
+  }
+
   Future<void> _submit() async {
-    if (startDate == null || endDate == null || reasonController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Lengkapi form')));
+    if (startDate == null || endDate == null) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Pilih tanggal mulai dan selesai')));
+      return;
+    }
+    if (reasonController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Alasan tidak boleh kosong')));
       return;
     }
 
     setState(() => isSubmitting = true);
     try {
       final dio = ref.read(dioProvider);
-      await dio.post('/leave-requests', data: {
-        'type': type,
+      await dio.post('/leaves', data: {
+        'type': selectedType,
         'startDate': startDate!.toIso8601String(),
         'endDate': endDate!.toIso8601String(),
-        'reason': reasonController.text,
+        'reason': reasonController.text.trim(),
       });
       ref.invalidate(leaveRequestsProvider);
       if (mounted) {
         Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Berhasil mengajukan izin')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Pengajuan izin berhasil dibuat'),
+            backgroundColor: AppColors.statusHadir,
+          ),
+        );
       }
     } on DioException catch (e) {
       final msg = e.response?.data?['message'] ?? e.message;
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg.toString())));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Gagal membuat: $msg')));
     } finally {
       if (mounted) setState(() => isSubmitting = false);
     }
   }
 
-  Future<void> _pickDate(bool isStart) async {
-    final date = await showDatePicker(
-      context: context,
-      initialDate: DateTime.now(),
-      firstDate: DateTime(2000),
-      lastDate: DateTime(2100),
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(
-              primary: Colors.blueAccent, 
-              onPrimary: Colors.white, 
-              onSurface: Colors.black87, 
-            ),
-            textButtonTheme: TextButtonThemeData(
-              style: TextButton.styleFrom(foregroundColor: Colors.blueAccent),
-            ),
-          ),
-          child: child!,
-        );
-      },
-    );
-    if (date != null) {
-      setState(() {
-        if (isStart) {
-          startDate = date;
-        } else {
-          endDate = date;
-        }
-      });
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return AlertDialog(
-      title: const Text('Buat Pengajuan Baru', style: TextStyle(fontWeight: FontWeight.bold)),
+      backgroundColor: isDark ? AppColors.darkSurface : AppColors.surface,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      title: const Text('Buat Pengajuan Izin', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18)),
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             DropdownButtonFormField<String>(
-              value: type,
-              items: ['IZIN', 'CUTI', 'SAKIT', 'DINAS_LUAR'].map((e) => DropdownMenuItem(value: e, child: Text(e.replaceAll('_', ' ')))).toList(),
-              onChanged: (v) => setState(() => type = v!),
-              decoration: InputDecoration(
-                labelText: 'Jenis Pengajuan',
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-              ),
+              value: selectedType,
+              dropdownColor: isDark ? AppColors.darkSurface : AppColors.surface,
+              decoration: const InputDecoration(labelText: 'Tipe Izin'),
+              items: const [
+                DropdownMenuItem(value: 'IZIN', child: Text('Izin')),
+                DropdownMenuItem(value: 'SAKIT', child: Text('Sakit')),
+                DropdownMenuItem(value: 'CUTI', child: Text('Cuti')),
+                DropdownMenuItem(value: 'DINAS_LUAR', child: Text('Dinas Luar')),
+              ],
+              onChanged: (val) => setState(() => selectedType = val!),
             ),
             const SizedBox(height: 16),
             InkWell(
@@ -400,8 +496,10 @@ class _AddLeaveDialogState extends ConsumerState<_AddLeaveDialog> {
               child: InputDecorator(
                 decoration: InputDecoration(
                   labelText: 'Mulai Tanggal',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                  suffixIcon: const Icon(Icons.calendar_today_rounded, color: Colors.blueAccent),
+                  suffixIcon: Icon(
+                    Icons.calendar_today_rounded,
+                    color: isDark ? AppColors.accent : AppColors.primary,
+                  ),
                 ),
                 child: Text(startDate != null ? DateFormat('dd MMM yyyy').format(startDate!) : 'Pilih Tanggal'),
               ),
@@ -413,8 +511,10 @@ class _AddLeaveDialogState extends ConsumerState<_AddLeaveDialog> {
               child: InputDecorator(
                 decoration: InputDecoration(
                   labelText: 'Sampai Tanggal',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                  suffixIcon: const Icon(Icons.calendar_today_rounded, color: Colors.blueAccent),
+                  suffixIcon: Icon(
+                    Icons.calendar_today_rounded,
+                    color: isDark ? AppColors.accent : AppColors.primary,
+                  ),
                 ),
                 child: Text(endDate != null ? DateFormat('dd MMM yyyy').format(endDate!) : 'Pilih Tanggal'),
               ),
@@ -422,10 +522,9 @@ class _AddLeaveDialogState extends ConsumerState<_AddLeaveDialog> {
             const SizedBox(height: 16),
             TextField(
               controller: reasonController,
-              decoration: InputDecoration(
+              decoration: const InputDecoration(
                 labelText: 'Alasan Lengkap',
                 alignLabelWithHint: true,
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
               ),
               maxLines: 3,
             ),
@@ -435,20 +534,19 @@ class _AddLeaveDialogState extends ConsumerState<_AddLeaveDialog> {
       actionsPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
       actions: [
         TextButton(
-          onPressed: () => Navigator.pop(context), 
-          style: TextButton.styleFrom(foregroundColor: Colors.grey.shade700),
+          onPressed: () => Navigator.pop(context),
           child: const Text('Batal'),
         ),
         ElevatedButton(
-          onPressed: isSubmitting ? null : _submit, 
+          onPressed: isSubmitting ? null : _submit,
           style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFF2E3192),
+            backgroundColor: isDark ? AppColors.primaryLight : AppColors.primary,
             foregroundColor: Colors.white,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           ),
-          child: isSubmitting 
-            ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)) 
-            : const Text('Kirim Pengajuan'),
+          child: isSubmitting
+              ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+              : const Text('Kirim Pengajuan'),
         ),
       ],
     );
